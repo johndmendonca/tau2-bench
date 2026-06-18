@@ -1,3 +1,5 @@
+import os
+
 # =============================================================================
 # SIMULATION DEFAULTS (overridable via CLI)
 # =============================================================================
@@ -21,9 +23,28 @@ DEFAULT_LLM_TEMPERATURE_USER = 0.0
 DEFAULT_LLM_ARGS_AGENT = {"temperature": DEFAULT_LLM_TEMPERATURE_AGENT}
 DEFAULT_LLM_ARGS_USER = {"temperature": DEFAULT_LLM_TEMPERATURE_USER}
 
-DEFAULT_LLM_NL_ASSERTIONS = "gpt-4.1-2025-04-14"
-DEFAULT_LLM_NL_ASSERTIONS_TEMPERATURE = 0.0
+# NL assertion judge. `gpt-4.1` (the upstream default) routes through litellm's
+# OpenAI provider and needs OPENAI_API_KEY; without it every task carrying
+# nl_assertions fails with an AuthenticationError. Default to an Azure deployment
+# instead, and let every field be overridden via env so other setups can repoint
+# it (api_key falls back to litellm's AZURE_API_KEY handling when unset).
+DEFAULT_LLM_NL_ASSERTIONS = os.getenv("TAU2_LLM_NL_ASSERTIONS", "azure/gpt-5.4-mini")
+DEFAULT_LLM_NL_ASSERTIONS_TEMPERATURE = float(
+    os.getenv("TAU2_LLM_NL_ASSERTIONS_TEMPERATURE", "0.0")
+)
 DEFAULT_LLM_NL_ASSERTIONS_ARGS = {"temperature": DEFAULT_LLM_NL_ASSERTIONS_TEMPERATURE}
+_nl_assertions_api_base = os.getenv(
+    "TAU2_LLM_NL_ASSERTIONS_API_BASE",
+    "https://ai-research-east2-us-resource.cognitiveservices.azure.com/",
+)
+if _nl_assertions_api_base:
+    DEFAULT_LLM_NL_ASSERTIONS_ARGS["api_base"] = _nl_assertions_api_base
+_nl_assertions_api_version = os.getenv("TAU2_LLM_NL_ASSERTIONS_API_VERSION")
+if _nl_assertions_api_version:
+    DEFAULT_LLM_NL_ASSERTIONS_ARGS["api_version"] = _nl_assertions_api_version
+_nl_assertions_api_key = os.getenv("TAU2_LLM_NL_ASSERTIONS_API_KEY")
+if _nl_assertions_api_key:
+    DEFAULT_LLM_NL_ASSERTIONS_ARGS["api_key"] = _nl_assertions_api_key
 
 DEFAULT_LLM_ENV_INTERFACE = "gpt-4.1-2025-04-14"
 DEFAULT_LLM_ENV_INTERFACE_TEMPERATURE = 0.0
